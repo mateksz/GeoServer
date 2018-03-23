@@ -16,10 +16,11 @@ def main():
     consumer = multiprocessing.Process(target=processor.process_data)
     consumer.daemon = True
     consumer.start()
-    geo_server.run_loop()
     try:
+        geo_server.run_loop()
         consumer.join()
     except KeyboardInterrupt:
+        geo_server.stop_loop()
         print("Bye")
         sys.exit(0)
 

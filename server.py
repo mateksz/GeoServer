@@ -2,7 +2,7 @@ import config
 import threading
 import socketserver
 import traceback
-import sys
+
 
 client_time_out = config.client_time_out
 
@@ -11,21 +11,17 @@ class GeoRequestHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         self.request.settimeout(client_time_out)
-        try:
-            while True:
-                data = str(self.request.recv(1024), 'ascii')
-                if data[0] == "$":
-                    self.server.data_queue.put(data)
-                else:
-                    self.request.close()
-                    break
-        except KeyboardInterrupt:
-            print("Disconnecting {}".format(self.client_address))
-            self.request.close()
-
+        while True:
+            data = str(self.request.recv(1024), 'ascii')
+            if data[0] == "$":
+                self.server.data_queue.put(data)
+            else:
+                self.request.close()
+                break
 
 
 class BaseGeoServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    daemon_threads = True
 
     def __init__(self, host_port_tuple, streamhandler, data_queue):
         super().__init__(host_port_tuple, streamhandler)
@@ -50,9 +46,9 @@ class GeoServer:
     def run_loop(self):
         server_thread = threading.Thread(target=self.geo_server.serve_forever)
         server_thread.daemon = True
+        print("Starting main server thread")
         server_thread.start()
-        self.geo_server.shutdown()
-        self.geo_server.server_close()
+        print("Started main server thread")
 
     def stop_loop(self):
         print("shutting down main loop...")
