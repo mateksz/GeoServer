@@ -2,9 +2,10 @@ import config
 import threading
 import socketserver
 import traceback
-
+import logging
 
 client_time_out = config.client_time_out
+log = logging.getLogger(__name__)
 
 
 class GeoRequestHandler(socketserver.BaseRequestHandler):
@@ -14,8 +15,11 @@ class GeoRequestHandler(socketserver.BaseRequestHandler):
         while True:
             data = str(self.request.recv(1024), 'ascii')
             if data[0] == "$":
+                log.debug("Received data form {}".format(self.client_address[0]))
                 self.server.data_queue.put(data)
+                log.debug("Data put into queue")
             else:
+                log.debug("Data malformed - dropping")
                 self.request.close()
                 break
 
@@ -29,7 +33,7 @@ class BaseGeoServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
     def handle_error(self, request, client_address):
         if "socket.timeout" in str(traceback.format_exc()):
-            print("Time out from {}".format(client_address))
+            log.info("Time out from {}".format(client_address[0]))
         else:
             print('-'*40)
             print('Exception happened during processing of request from', end=' ')
@@ -46,15 +50,15 @@ class GeoServer:
     def run_loop(self):
         server_thread = threading.Thread(target=self.geo_server.serve_forever)
         server_thread.daemon = True
-        print("Starting main server thread")
+        log.debug("Starting main server thread...")
         server_thread.start()
-        print("Started main server thread")
+        log.debug("Started main server thread")
 
     def stop_loop(self):
-        print("shutting down main loop...")
+        log.debug("Shutting down main loop...")
         self.geo_server.shutdown()
         self.geo_server.server_close()
-        print("server main loop shut down completed")
+        log.debug("Server main loop shut down completed")
 
 
 
