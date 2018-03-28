@@ -4,14 +4,13 @@ import socketserver
 import traceback
 import logging
 
-client_time_out = config.client_time_out
-log = logging.getLogger(__name__)
 
+log = logging.getLogger(__name__)
 
 class GeoRequestHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
-        self.request.settimeout(client_time_out)
+        self.request.settimeout(config.client_time_out)
         while True:
             data = str(self.request.recv(1024), 'ascii')
             if data[0] == "$":
