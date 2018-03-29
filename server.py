@@ -3,6 +3,7 @@ import threading
 import socketserver
 import traceback
 import logging
+import sys
 
 
 log = logging.getLogger(__name__)
@@ -39,17 +40,18 @@ class BaseGeoServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         if "socket.timeout" in str(traceback.format_exc()):
             log.info("Time out from {}".format(client_address[0]))
         else:
-            print('-'*40)
-            print('Exception happened during processing of request from', end=' ')
-            print(client_address)
-            traceback.print_exc() # XXX But this goes to stderr!
-            print('-'*40)
+            log.warning("Exception happened during processing of request from {}".format(client_address[0]))
+            log.exception("Exception : ")
 
 
 class GeoServer:
 
     def __init__(self, host_address, host_port, data_queue):
-        self.geo_server = BaseGeoServer((host_address, host_port), GeoRequestHandler, data_queue)
+        try:
+            self.geo_server = BaseGeoServer((host_address, host_port), GeoRequestHandler, data_queue)
+        except Exception as e:
+            log.fatal("Unable to initialize main server thread {}".format(e))
+            sys.exit(1)
 
     def run_loop(self):
         server_thread = threading.Thread(target=self.geo_server.serve_forever)

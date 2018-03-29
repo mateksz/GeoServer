@@ -9,9 +9,13 @@ import sys
 
 def main():
 
-    log_file_handler = logging.handlers.RotatingFileHandler(config.log_file,
-                                                            maxBytes=config.log_file_size * 1024 * 1024,
-                                                            backupCount=config.log_file_backup)
+    try:
+        log_file_handler = logging.handlers.RotatingFileHandler(config.log_file,
+                                                                maxBytes=config.log_file_size * 1024 * 1024,
+                                                                backupCount=config.log_file_backup)
+    except Exception as e:
+        print("FATAL. Unable to register log file : {}".format(e))
+        sys.exit(1)
     log_file_handler.setLevel(config.log_level)
     log_file_handler.setFormatter(logging.Formatter(config.log_format, config.log_date_format))
     root = logging.getLogger()
