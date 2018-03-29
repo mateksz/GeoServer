@@ -29,7 +29,7 @@ def main():
         root.info('Geo server app starting...')
         geo_server.run_loop()
         processor_p.join()
-        root.info('Geo server app start completed')
+        root.info('Geo server app start completed') #TODO never displayed, due to multiprocessing/logging?
     except KeyboardInterrupt:
         root.info('Received interrupt. Shutting down...')
         geo_server.stop_loop()

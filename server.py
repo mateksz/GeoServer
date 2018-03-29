@@ -7,16 +7,21 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class GeoRequestHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         self.request.settimeout(config.client_time_out)
+        counter = 0
         while True:
             data = str(self.request.recv(1024), 'ascii')
             if data[0] == "$":
-                log.debug("Received data form {}".format(self.client_address[0]))
+                log.debug("Received package number {0} from {1}".format(counter + 1, self.client_address[0]))
+                if counter == 0:
+                    log.info("Received first package from {}".format(self.client_address[0]))
                 self.server.data_queue.put(data)
                 log.debug("Data put into queue")
+                counter += 1
             else:
                 log.debug("Data malformed - dropping")
                 self.request.close()
