@@ -8,7 +8,14 @@ import sys
 
 
 def main():
+    """Entry point for the app
 
+       Initializes logging according to the config file.
+       Starts TCP socket server in one process and data
+       processor in the other. Both processes share a queue.
+       Server writes data to it and processor reads it. Due to
+       multiprocessing complication, the app is meant to be shutdown with SIGINT.
+    """
     try:
         log_file_handler = logging.handlers.RotatingFileHandler(config.log_file,
                                                                 maxBytes=config.log_file_size * 1024 * 1024,

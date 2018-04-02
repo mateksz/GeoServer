@@ -10,7 +10,14 @@ log = logging.getLogger(__name__)
 
 
 class GeoRequestHandler(socketserver.BaseRequestHandler):
+    """Implements request handler
 
+        No application layer protocol, just bytes send over TCP socket.
+        Accepts any data, that meets basic requirements. No session control/retransmission
+        or closing. Server closes socket on the preconfigured timeout. Keeps track of
+        received packages. Writes data to the multiprocessing data queue, from where data
+        processor reads.
+    """
     def handle(self):
         self.request.settimeout(config.client_time_out)
         counter = 0
@@ -20,7 +27,7 @@ class GeoRequestHandler(socketserver.BaseRequestHandler):
                 log.debug("Received package number {0} from {1}".format(counter + 1, self.client_address[0]))
                 if counter == 0:
                     log.info("Received first package from {}".format(self.client_address[0]))
-                self.server.data_queue.put(data)
+                self.server.data_queue.put(data) #TODO research into problems & error handling
                 log.debug("Data put into queue")
                 counter += 1
             else:
@@ -30,6 +37,13 @@ class GeoRequestHandler(socketserver.BaseRequestHandler):
 
 
 class BaseGeoServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    """Defines application server as a basic TCP socket server
+
+        Sets threads to deamon mode, so spawned sockets are closed as soon as the main thread is closing.
+        Overrides __init__, so we pass multiprocessing data queue, which is used in request handler.
+        We log socket timeout as an info. We catch exceptions in threads and log them
+        as errors with full stack trace.
+    """
     daemon_threads = True
 
     def __init__(self, host_port_tuple, streamhandler, data_queue):
@@ -45,8 +59,10 @@ class BaseGeoServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 
 class GeoServer:
+    """App class to be initialized as a TCP socket server"""
 
     def __init__(self, host_address, host_port, data_queue):
+        #Takes queue so it is passed to TCP server, where handler uses it
         try:
             self.geo_server = BaseGeoServer((host_address, host_port), GeoRequestHandler, data_queue)
         except Exception as e:
